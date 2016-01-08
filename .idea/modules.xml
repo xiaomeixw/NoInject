@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/NoInject.iml" filepath="$PROJECT_DIR$/NoInject.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/no-inject-api/no-inject-api.iml" filepath="$PROJECT_DIR$/no-inject-api/no-inject-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/no-inject-process/no-inject-process.iml" filepath="$PROJECT_DIR$/no-inject-process/no-inject-process.iml" />
+    </modules>
+  </component>
+</project>

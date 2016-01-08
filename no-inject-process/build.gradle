@@ -1,0 +1,16 @@
+apply plugin: 'java'
+
+sourceSets {
+    main {
+        java {
+            srcDirs =  ['src/main/java', '../no-inject-api/src/main/java']
+        }
+
+    }
+}
+
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile project(':no-inject-api')
+}
