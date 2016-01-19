@@ -1,1 +1,1 @@
-include ':app', ':no-inject-api', ':no-inject-process'
+include ':app', ':no-inject-api', ':no-inject-process', ':no-inject-runtime'

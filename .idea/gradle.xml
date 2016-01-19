@@ -12,6 +12,7 @@
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/no-inject-api" />
             <option value="$PROJECT_DIR$/no-inject-process" />
+            <option value="$PROJECT_DIR$/no-inject-runtime" />
           </set>
         </option>
       </GradleProjectSettings>

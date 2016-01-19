@@ -1,5 +1,6 @@
 package com.sabria.noinject.process;
 
+
 import com.sabria.noinject.InjectView;
 import com.squareup.javawriter.JavaWriter;
 
@@ -10,6 +11,9 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
+import javax.annotation.processing.Messager;
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.element.Element;
@@ -18,43 +22,41 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.NoType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
 @SupportedAnnotationTypes("com.sabria.noinject.InjectView")
-public class LittleKnifeProcessor extends AbstractProcessor {
-    private static final String LITTLE_KNIFE_TAG = "$$LittleKnife";
+public class NoKnifeProcessor extends AbstractProcessor {
+    private static final String LITTLE_KNIFE_TAG = "$$NoKnife";
+
+
+    @Override
+    public synchronized void init(ProcessingEnvironment processingEnv) {
+        super.init(processingEnv);
+
+        Elements elementUtils = processingEnv.getElementUtils();
+        Types typeUtils = processingEnv.getTypeUtils();
+        Filer filer = processingEnv.getFiler();
+        Messager messager = processingEnv.getMessager();
+
+
+    }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-
-        //We are only going to deal with one annotation; @InjectView, therefore we are interested in getting the Elements that are tagged with that Annotation.
-        //You can think of Elements as a the components of a Java class; i.e. variables, methods, classes, package, etc.
-        //In our case Elements will be the fields Annotated with @InjectView since InjectView.class has a @Target() of FIELD.
         final Set<? extends Element> annotatedElements = roundEnv
                 .getElementsAnnotatedWith(InjectView.class);
-
-        //process() gets called more than once, annotatedElements might be empty an empty Set in one of those calls( i.e. when there are no annotations to process this round).
         if (annotatedElements.size() > 0) {
-
-            // Just get the first element out of the Set to gather information about our target; the Activity with @InjectView.
-            // This information will be used when creating a new .java file during compile-time.
             final Element firstAnnotatedElement = annotatedElements.iterator().next();
-            // Get the package name of the target Activity
             final String packageName = processingEnv.getElementUtils()
                     .getPackageOf(firstAnnotatedElement).toString();
-            // Get the name of the target Activity.
-            // Since our Element is a field, getEnclosingElement() will return an Element that represents the target class.
             final String hostActivityName = firstAnnotatedElement.getEnclosingElement()
                     .getSimpleName().toString();
-            // Create the name of the compile-time generate .java file
             final String newSourceName = hostActivityName + LITTLE_KNIFE_TAG;
-
             try {
-                // JavaWriter is a library from Square that makes creating a new Java file simpler.
-
                 JavaWriter writer = createWriter(newSourceName);
-                // Create different sections of the actual compile-time generated .java source
                 createHeader(annotatedElements, packageName, writer);
                 beginType(newSourceName, writer);
                 beginMethod(hostActivityName, writer);
@@ -63,9 +65,7 @@ public class LittleKnifeProcessor extends AbstractProcessor {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
-        // return false so other rounds can process this Annotation if needed.
         return false;
     }
 
@@ -79,27 +79,12 @@ public class LittleKnifeProcessor extends AbstractProcessor {
                               JavaWriter writer)
             throws IOException {
         writer.emitPackage(packageName);
-        // Map is created to include imports for the same type once on the compile-time generated file.
-        //i.e.
-        /*
-        * @InjectView(R.id.text)
-        * TextView text;
-        *
-        * @InjectView(R.id.text)
-        * TextView text1
-        *
-        * would produce on compile-time generated source:
-        *
-        * import android.widget.TextView
-        * import android.widget.TextView
-        *
-        * if we do not filter duplicates, JavaWriter will throw an IllegalArgumentException.
-        * */
+
         Map<String, Element> nonRepeatedImports = new HashMap<>();
 
         for (Element element : annotatedElements) {
             TypeMirror elementType = element.asType();
-            // Check if we are a subtype of View. @InjectView can only be used if the Annotated field is of type View.
+
             if (isSubtypeOfType(elementType, "android.view.View")) {
                 nonRepeatedImports.put(element.asType().toString(), element);
             } else {
@@ -119,12 +104,12 @@ public class LittleKnifeProcessor extends AbstractProcessor {
 
 
         if (typeMirror instanceof NoType) {
-            // NoType is returned if we reached java.langObject on the previous recursion. Not a subtype of android.view.View
+
             return false;
         }
 
         if (otherType.equals(typeMirror.toString())) {
-            // Annotated field is a child of android.view.View
+
             return true;
         }
 
@@ -133,14 +118,14 @@ public class LittleKnifeProcessor extends AbstractProcessor {
         TypeElement typeElement = (TypeElement) element;
         TypeMirror superType = typeElement.getSuperclass();
         if (isSubtypeOfType(superType, otherType)) {
-            // This current superType is not android.view.View, but we can keep looking.
+
             return true;
         }
         return false;
     }
 
     private void beginType(String newSourceName, JavaWriter writer) throws IOException {
-        writer.beginType(newSourceName, "class");
+        writer.beginType(newSourceName, "class", EnumSet.of(Modifier.PUBLIC));
     }
 
     private void beginMethod(String hostActivityname, JavaWriter writer) throws IOException {
